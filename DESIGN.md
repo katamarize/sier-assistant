@@ -1,7 +1,7 @@
 # DESIGN.md — 自分専用SIerアシスタント
 
 最終更新: 2026-07-13
-ステータス: マイルストーン1 実装準備中(Step 0)
+ステータス: マイルストーン1 実装準備完了(Step 完了)
 
 ---
 
@@ -160,8 +160,11 @@ sier-assistant/
 │   ├── llm/                # ollama_client.py, prompts/
 │   ├── notifiers/          # slack.py (将来: notion.py)
 │   └── pipelines/          # daily_news.py (将来: goods_watch.py, morning_report.py)
+├── scripts/                 # Step単位の動作確認スクリプト(check_llm.py等)
+├── articles/                 # Zenn記事下書き(Step完了ごとに1本、PLAN.md §5 運用ルール6参照)
 ├── tests/
 ├── DESIGN.md               # 本ドキュメント
+├── PLAN.md                 # 実装計画書(進捗トラッカー・契約・Step別仕様)
 ├── .env.example
 └── README.md
 ```
