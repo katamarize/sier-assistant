@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | 0 | 環境構築 | ✅ 完了 | 2026-07-13 | 未作成 |
 | 1 | LLM疎通スクリプト | ✅ 完了 | 2026-07-13 | [articles/step1-ollama-structured-output.md](articles/step1-ollama-structured-output.md) |
-| 2 | RSS収集 + SQLite既読管理 | ⬜ 未着手 | | |
+| 2 | RSS収集 + SQLite既読管理 | ✅ 完了 | 2026-07-14 | [articles/step2-rss-diff-detection.md](articles/step2-rss-diff-detection.md) |
 | 3 | パイプライン結合 + sources.yaml | ⬜ 未着手 | | |
 | 4 | Slack通知 | ⬜ 未着手 | | |
 | 5 | タスクスケジューラ常駐化 | ⬜ 未着手 | | |

@@ -1,0 +1,74 @@
+import hashlib
+import os
+import sqlite3
+from datetime import datetime, timezone
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+from src.core.models import Item
+
+load_dotenv()
+
+DB_PATH = os.environ.get("DB_PATH", "data/assistant.db")
+
+_SCHEMA = """
+CREATE TABLE IF NOT EXISTS seen_items (
+    source_id    TEXT,
+    item_key     TEXT,
+    content_hash TEXT,
+    first_seen   TEXT,
+    PRIMARY KEY (source_id, item_key)
+);
+
+CREATE TABLE IF NOT EXISTS items (
+    id           INTEGER PRIMARY KEY,
+    source_id    TEXT,
+    title        TEXT,
+    url          TEXT,
+    content      TEXT,
+    status       TEXT DEFAULT 'pending',
+    importance   INTEGER,
+    summary      TEXT,
+    tags         TEXT,
+    created_at   TEXT
+);
+"""
+
+
+def _connect() -> sqlite3.Connection:
+    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+    return sqlite3.connect(DB_PATH)
+
+
+def init_db() -> None:
+    with _connect() as conn:
+        conn.executescript(_SCHEMA)
+
+
+def is_seen(source_id: str, item_key: str) -> bool:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM seen_items WHERE source_id = ? AND item_key = ?",
+            (source_id, item_key),
+        ).fetchone()
+    return row is not None
+
+
+def mark_seen(item: Item) -> None:
+    content_hash = hashlib.sha256(item.content.encode("utf-8")).hexdigest()
+    with _connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO seen_items "
+            "(source_id, item_key, content_hash, first_seen) VALUES (?, ?, ?, ?)",
+            (item.source_id, item.item_key, content_hash, datetime.now(timezone.utc).isoformat()),
+        )
+
+
+def save_item(item: Item) -> None:
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO items (source_id, title, url, content, status, created_at) "
+            "VALUES (?, ?, ?, ?, 'pending', ?)",
+            (item.source_id, item.title, item.url, item.content, datetime.now(timezone.utc).isoformat()),
+        )
