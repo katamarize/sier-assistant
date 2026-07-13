@@ -1,0 +1,5 @@
+.env
+config/sources.yaml
+*.db
+.venv/
+__pycache__/
