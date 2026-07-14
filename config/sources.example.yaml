@@ -1,0 +1,52 @@
+# sources.yaml のテンプレート。
+# 個人設定は config/sources.yaml にコピーして編集する(.gitignore済み)。
+
+defaults:
+  interval_hours: 6
+  min_importance_to_notify: 3
+
+sources:
+  - id: aws-whats-new
+    name: AWS What's New
+    type: rss
+    url: https://aws.amazon.com/about-aws/whats-new/recent/feed/
+    category: it_news
+    tags_hint: [AWS, クラウド]
+
+  - id: publickey
+    name: Publickey
+    type: rss
+    url: https://www.publickey1.jp/atom.xml
+    category: it_news
+    tags_hint: [クラウド, インフラ, 開発ツール]
+
+  - id: hatena-it
+    name: はてなブックマーク テクノロジー
+    type: rss
+    url: https://b.hatena.ne.jp/hotentry/it.rss
+    category: it_news
+    tags_hint: [技術トレンド]
+
+  - id: qiita-popular
+    name: Qiita 人気の投稿
+    type: rss
+    url: https://qiita.com/popular-items/feed
+    category: learning
+    tags_hint: [プログラミング, 学習]
+
+  - id: itmedia-news
+    name: ITmedia NEWS
+    type: rss
+    url: https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml
+    category: it_news
+    tags_hint: [ITニュース]
+
+  # type: html は将来のHTML差分監視(M2)用のサンプル。現時点では未実装
+  # - id: artist-goods
+  #   name: ○○公式グッズ
+  #   type: html
+  #   url: https://example.com/goods
+  #   category: artist
+  #   selector: "main"
+  #   interval_hours: 3
+  #   min_importance_to_notify: 2

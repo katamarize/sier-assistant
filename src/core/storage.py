@@ -1,12 +1,14 @@
 import hashlib
+import json
 import os
 import sqlite3
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-from src.core.models import Item
+from src.core.models import AnalysisResult, Item
 
 load_dotenv()
 
@@ -22,18 +24,28 @@ CREATE TABLE IF NOT EXISTS seen_items (
 );
 
 CREATE TABLE IF NOT EXISTS items (
-    id           INTEGER PRIMARY KEY,
-    source_id    TEXT,
-    title        TEXT,
-    url          TEXT,
-    content      TEXT,
-    status       TEXT DEFAULT 'pending',
-    importance   INTEGER,
-    summary      TEXT,
-    tags         TEXT,
-    created_at   TEXT
+    id            INTEGER PRIMARY KEY,
+    source_id     TEXT,
+    title         TEXT,
+    url           TEXT,
+    content       TEXT,
+    status        TEXT DEFAULT 'pending',
+    importance    INTEGER,
+    summary       TEXT,
+    beginner_note TEXT,
+    tags          TEXT,
+    should_notify INTEGER,
+    reason        TEXT,
+    created_at    TEXT
 );
 """
+
+
+@dataclass
+class PendingItem:
+    id: int
+    title: str
+    content: str
 
 
 def _connect() -> sqlite3.Connection:
@@ -71,4 +83,28 @@ def save_item(item: Item) -> None:
             "INSERT INTO items (source_id, title, url, content, status, created_at) "
             "VALUES (?, ?, ?, ?, 'pending', ?)",
             (item.source_id, item.title, item.url, item.content, datetime.now(timezone.utc).isoformat()),
+        )
+
+
+def fetch_pending_items() -> list[PendingItem]:
+    with _connect() as conn:
+        rows = conn.execute("SELECT id, title, content FROM items WHERE status = 'pending'").fetchall()
+    return [PendingItem(id=row[0], title=row[1], content=row[2]) for row in rows]
+
+
+def update_item_analysis(item_id: int, result: AnalysisResult, status: str) -> None:
+    with _connect() as conn:
+        conn.execute(
+            "UPDATE items SET status = ?, importance = ?, summary = ?, beginner_note = ?, "
+            "tags = ?, should_notify = ?, reason = ? WHERE id = ?",
+            (
+                status,
+                result.importance,
+                result.summary,
+                result.beginner_note,
+                json.dumps(result.tags, ensure_ascii=False),
+                int(result.should_notify),
+                result.reason,
+                item_id,
+            ),
         )

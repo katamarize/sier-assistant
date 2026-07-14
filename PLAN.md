@@ -48,8 +48,9 @@ DESIGN.md §5 のJSONスキーマそのまま。
 
 ### C2: itemsテーブル + status状態機械
 DESIGN.md §5 のDDLそのまま。状態遷移: `pending → analyzed → notified`、通知不要は `skipped`。
-- 書き込み: Step 3(pending作成、analyzed/skipped更新)、Step 4(notified更新)
+- 書き込み: Step 3(pending作成、LLMのshould_notifyに基づきanalyzed/skipped更新)、Step 4(importance閾値未満をskippedに、通知した分をnotifiedに更新)
 - **statusの値を増減する場合はStep 3と4の両方を修正**
+- Step 3で `beginner_note` / `should_notify` / `reason` 列を追加(C1の全フィールドをDBに保持するため)。既存の `data/assistant.db` は破壊的変更のため作り直した(個人用ローカルDBのため許容)
 
 ### C3: seen_itemsテーブル(差分検知)
 DESIGN.md §5 のDDLそのまま。RSSの `item_key` = entry id(なければlink)。

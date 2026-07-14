@@ -118,20 +118,23 @@ CREATE TABLE seen_items (
 
 -- 検知した差分と処理状態(キューを兼ねる)
 CREATE TABLE items (
-    id           INTEGER PRIMARY KEY,
-    source_id    TEXT,
-    title        TEXT,
-    url          TEXT,
-    content      TEXT,
-    status       TEXT DEFAULT 'pending',
-    importance   INTEGER,
-    summary      TEXT,
-    tags         TEXT,      -- JSON文字列
-    created_at   TEXT
+    id            INTEGER PRIMARY KEY,
+    source_id     TEXT,
+    title         TEXT,
+    url           TEXT,
+    content       TEXT,
+    status        TEXT DEFAULT 'pending',
+    importance    INTEGER,
+    summary       TEXT,
+    beginner_note TEXT,     -- Step3で追加。LLM出力(C1)のbeginner_noteをそのまま保持
+    tags          TEXT,     -- JSON文字列
+    should_notify INTEGER,  -- Step3で追加。LLM出力(C1)のshould_notifyを0/1で保持
+    reason        TEXT,     -- Step3で追加。LLM出力(C1)のreason(デバッグ・プロンプト改善用)
+    created_at    TEXT
 );
 ```
 
-status の状態遷移: `pending`(収集済) → `analyzed`(LLM処理済) → `notified`(通知済)。LLMが通知不要と判定したら `skipped`。
+status の状態遷移: `pending`(収集済) → `analyzed`(LLMがshould_notify=trueと判定) → `notified`(Slack通知済)。LLMが `should_notify=false` と判定、または `analyzed` のうちソースの `min_importance_to_notify` 未満は `skipped`。
 
 ### LLM出力スキーマ(structured output)
 
