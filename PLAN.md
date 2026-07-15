@@ -13,9 +13,10 @@
 | 0 | 環境構築 | ✅ 完了 | 2026-07-13 | 未作成 |
 | 1 | LLM疎通スクリプト | ✅ 完了 | 2026-07-13 | [articles/step1-ollama-structured-output.md](articles/step1-ollama-structured-output.md) |
 | 2 | RSS収集 + SQLite既読管理 | ✅ 完了 | 2026-07-14 | [articles/step2-rss-diff-detection.md](articles/step2-rss-diff-detection.md) |
-| 3 | パイプライン結合 + sources.yaml | ⬜ 未着手 | | |
+| 3 | パイプライン結合 + sources.yaml | ✅ 完了 | 2026-07-15 | [articles/step3-pipeline-sources-yaml.md](articles/step3-pipeline-sources-yaml.md) |
 | 4 | Slack通知 | ⬜ 未着手 | | |
 | 5 | タスクスケジューラ常駐化 | ⬜ 未着手 | | |
+| 番外 | BSODインシデント + llama-server移行 | ✅ 完了 | 2026-07-15 | [articles/step3-incident-gpu-bsod.md](articles/step3-incident-gpu-bsod.md) |
 
 ---
 
@@ -42,7 +43,7 @@ Step間で共有する「取り決め」。**ここを変えると複数Stepに�
 
 ### C1: LLM出力スキーマ
 DESIGN.md §5 のJSONスキーマそのまま。
-- 生産者: `src/llm/ollama_client.py`(Step 1)
+- 生産者: `src/llm/llm_client.py`(Step 1。旧`ollama_client.py`、llama-server移行時に改名)
 - 消費者: `src/pipelines/daily_news.py`(Step 3)、`src/notifiers/slack.py`(Step 4)
 - Pythonでは `AnalysisResult` dataclass(`src/core/models.py`)として受ける
 
@@ -64,10 +65,12 @@ DESIGN.md §5 の形式そのまま。
 ### C5: 環境変数(.env)
 | キー | 用途 | 使用Step |
 |---|---|---|
-| `OLLAMA_HOST` | 既定 `http://localhost:11434` | 1〜 |
-| `OLLAMA_MODEL` | 既定 `qwen3:8b`。モデル変更はここだけ | 1〜 |
+| `LLM_BASE_URL` | 既定 `http://localhost:8080/v1`(llama-serverのOpenAI互換API) | 1〜 |
+| `LLM_MODEL` | 既定 `local`。llama-serverは起動時ロードの1モデル固定のためAPI上は実質ダミー | 1〜 |
 | `SLACK_WEBHOOK_URL` | Incoming Webhook | 4〜 |
 | `DB_PATH` | 既定 `data/assistant.db` | 2〜 |
+
+※ 2026-07-15、Ollama(`OLLAMA_HOST`/`OLLAMA_MODEL`)からllama-serverに移行(BSODインシシデント対応、DESIGN.md §4参照)。モデル変更は`.env`ではなくllama-server起動bat(`qwen-start.bat`の`-m`)で行う運用に変更。
 
 ### C6: Itemデータクラス(collector共通戻り値)
 ```python
@@ -91,12 +94,13 @@ class Item:
 
 ### Step 1: LLM疎通スクリプト
 - 前提: Step 0のみ(DB・RSS不要。単体で完結)
-- 作るもの: `src/llm/ollama_client.py`、`src/llm/prompts/analyze_item.md`、`src/core/models.py`(AnalysisResult)
+- 作るもの: `src/llm/llm_client.py`、`src/llm/prompts/analyze_item.md`、`src/core/models.py`(AnalysisResult)
 - 公開するもの: `analyze(title: str, content: str) -> AnalysisResult`(契約C1)
 - 実装要点:
-  - `ollama` 公式Pythonパッケージ、`chat()` の `format` にC1のJSONスキーマdictを指定
+  - llama-serverのOpenAI互換APIへ `openai` パッケージで接続(`base_url`=C5の`LLM_BASE_URL`)、`response_format` にC1のJSONスキーマを指定(json_schema形式)
   - temperature低め(0.2程度)、タイムアウト120s、失敗時は独自例外 `LLMUnavailableError` を送出(リトライ1回)
   - プロンプトはコード外のファイルに分離(プロンプト改善を記事ネタにするため)
+  - ※当初は`ollama`パッケージ+`chat()`の`format`指定で実装(記事step1参照)。BSODインシデント(articles/step3-incident-gpu-bsod.md)を受けてllama-serverへ移行
 - 完了条件: 固定の日本語記事テキストを渡し、C1準拠のJSONがパースできる。Ollama停止時に例外が正しく出る
 - 検証: 記事風テキスト2〜3種(重要/軽微)で `should_notify` の判定が変わることを目視確認
 - 記事ネタ: LLMにJSONを返させる(structured output)
@@ -142,8 +146,9 @@ class Item:
 
 | 変更 | 影響範囲 | 影響しないもの |
 |---|---|---|
-| C1スキーマにフィールド追加 | prompts、ollama_client、slack整形、(DB列に持つなら)items DDL | collectors、diff |
-| モデル変更(qwen3:8b→他) | `.env` のみ。※出力品質は要再検証(プロンプト調整の可能性) | 全コード |
+| C1スキーマにフィールド追加 | prompts、llm_client、slack整形、(DB列に持つなら)items DDL | collectors、diff |
+| モデル変更 | llama-server起動bat(`-m`)のみ。※出力品質は要再検証(プロンプト調整の可能性) | 全コード・`.env` |
+| LLMサーバー変更(llama-server→他のOpenAI互換) | `.env`(LLM_BASE_URL)のみ | 全コード |
 | ソース追加(既存type) | sources.yaml追記のみ | 全コード |
 | 新type追加(html等) | collectors/に新ファイル+type分岐1行 | pipeline本体、storage、notifier |
 | status値の追加・変更 | Step 3と4の両方、DB内既存行のマイグレーション | Step 1、2 |

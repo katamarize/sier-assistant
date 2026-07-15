@@ -28,7 +28,7 @@
 | LLMの役割 | 収集ではなく「理解・整理」に限定 | 収集・差分検知は決定論的にPythonで行う方が安定 |
 | 差分→LLMの結合 | キュー方式(疎結合) | LLM停止時もパイプラインが壊れない。statusで再試行 |
 | 実行環境 | **メインPC 1台完結**(常時起動) | まずアプリを形にする。インフラ分散はその後 |
-| 推論方式 | 差分検知したらその場でOllamaへ(準リアルタイム) | 両PC常時起動方針のため。将来WoL方式へ移行可能な設計は維持 |
+| 推論方式 | 差分検知したらその場でローカルLLMサーバーへ(準リアルタイム) | 両PC常時起動方針のため。将来WoL方式へ移行可能な設計は維持 |
 | サブPC(ノート2台) | **将来検討**。現時点では計画から除外 | 24hサーバー化・検証環境化は マイルストーン2以降 |
 
 ---
@@ -41,12 +41,13 @@
 メインPC(RTX3070・常時起動)
   ├ スケジューラ: Windowsタスクスケジューラ(朝夕2回)
   ├ 収集・差分検知: Python + SQLite
-  ├ LLM分析: Ollama (localhost:11434)
+  ├ LLM分析: llama-server (localhost:8080, OpenAI互換API)
   └ 通知: Slack Incoming Webhook
 ```
 
 - n8n / Docker / Ubuntu / Notion はこの段階では**使わない**(後続マイルストーン)
-- Ollamaへの接続失敗時は items.status = pending のまま残し、次回実行時に再試行
+- llama-serverへの接続失敗時は items.status = pending のまま残し、次回実行時に再試行
+- llama-serverは起動bat(`qwen-start.bat`)を手動起動している間だけ稼働。停止していてもパイプラインは壊れない(上記pending維持)が、Step 5の常駐化ではサーバー起動を前提条件として扱う
 
 ---
 
@@ -56,9 +57,9 @@
 |---|---|---|
 | 言語 | Python 3.12系 | |
 | パッケージ管理 | uv | pyproject.tomlベース。GitHub公開時にきれい |
-| LLM実行 | Ollama(Windows版) | RTX3070(VRAM 8GB)をネイティブでGPU認識 |
-| モデル | 8BクラスのQ4量子化(第一候補: qwen3:8b) | 複数モデルの日本語要約比較は記事ネタとして実施予定 |
-| LLM出力 | structured output(formatにJSONスキーマ指定) | importance / tags / should_notify を機械可読で受ける |
+| LLM実行 | llama.cpp(llama-server)のOpenAI互換API | 当初Ollamaだったが、Step 3検証中のBSOD(GPU/メモリ起因の疑い)を受けて移行。`--n-cpu-moe` でMoEエキスパートをCPU側に置きVRAM圧迫を回避 |
+| モデル | Qwen3系 35B MoE(アクティブ約3B、IQ4_XS量子化) | llama-server起動bat(`-m`)で指定。モデル変更はbat編集(コード変更なし) |
+| LLM出力 | structured output(response_formatにJSONスキーマ指定) | llama.cppがJSON SchemaをGBNF文法に変換し生成を制約。importance / tags / should_notify を機械可読で受ける |
 | RSS取得 | feedparser | RSS/Atomがあるソースは必ずRSS優先 |
 | HTML本文抽出 | trafilatura | CSS変更等のノイズを本文抽出の段階で除去 |
 | 差分検知 | 本文抽出→正規化→ハッシュ化→SQLite比較 | RSSはentry idと更新日時で判定 |

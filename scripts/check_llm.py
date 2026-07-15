@@ -7,7 +7,7 @@ should_notify の判定が記事の重要度に応じて変化することを目
 import sys
 from dataclasses import asdict
 
-from src.llm.ollama_client import LLMUnavailableError, analyze
+from src.llm.llm_client import LLMUnavailableError, analyze
 
 sys.stdout.reconfigure(encoding="utf-8")
 

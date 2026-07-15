@@ -4,7 +4,7 @@ from src.collectors.rss import fetch_rss
 from src.core import config, storage
 from src.core.diff import filter_new_items
 from src.core.models import Item
-from src.llm.ollama_client import LLMUnavailableError, analyze
+from src.llm.llm_client import LLMUnavailableError, analyze
 
 _COLLECTORS = {
     "rss": fetch_rss,

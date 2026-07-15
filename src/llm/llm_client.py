@@ -2,15 +2,15 @@ import json
 import os
 from pathlib import Path
 
-import ollama
 from dotenv import load_dotenv
+from openai import OpenAI
 
 from src.core.models import AnalysisResult
 
 load_dotenv()
 
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:8b")
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
+LLM_MODEL = os.environ.get("LLM_MODEL", "local")
 
 _TIMEOUT_SECONDS = 120
 _TEMPERATURE = 0.2
@@ -46,22 +46,26 @@ class LLMUnavailableError(Exception):
 
 def analyze(title: str, content: str) -> AnalysisResult:
     prompt = _PROMPT_TEMPLATE.format(title=title, content=content)
-    client = ollama.Client(host=OLLAMA_HOST, timeout=_TIMEOUT_SECONDS)
+    # llama-serverはAPIキー不要だがopenaiパッケージは値を要求するためダミーを渡す
+    client = OpenAI(base_url=LLM_BASE_URL, api_key="no-key", timeout=_TIMEOUT_SECONDS)
 
     last_error: Exception | None = None
     for _ in range(_MAX_ATTEMPTS):
         try:
-            response = client.chat(
-                model=OLLAMA_MODEL,
+            response = client.chat.completions.create(
+                model=LLM_MODEL,
                 messages=[{"role": "user", "content": prompt}],
-                format=_RESPONSE_SCHEMA,
-                options={"temperature": _TEMPERATURE},
+                temperature=_TEMPERATURE,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {"name": "analysis", "schema": _RESPONSE_SCHEMA},
+                },
             )
-            data = json.loads(response["message"]["content"])
+            data = json.loads(response.choices[0].message.content)
             return AnalysisResult(**data)
         except Exception as e:
             last_error = e
 
     raise LLMUnavailableError(
-        f"Ollama analysis failed after {_MAX_ATTEMPTS} attempts: {last_error}"
+        f"LLM analysis failed after {_MAX_ATTEMPTS} attempts: {last_error}"
     ) from last_error
