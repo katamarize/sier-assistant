@@ -3,3 +3,5 @@ config/sources.yaml
 *.db
 .venv/
 __pycache__/
+logs/
+writing-style.md
