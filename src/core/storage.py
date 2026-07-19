@@ -48,6 +48,17 @@ class PendingItem:
     content: str
 
 
+@dataclass
+class NotifiableItem:
+    id: int
+    source_id: str
+    title: str
+    url: str
+    summary: str
+    beginner_note: str
+    importance: int
+
+
 def _connect() -> sqlite3.Connection:
     Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     return sqlite3.connect(DB_PATH)
@@ -90,6 +101,25 @@ def fetch_pending_items() -> list[PendingItem]:
     with _connect() as conn:
         rows = conn.execute("SELECT id, title, content FROM items WHERE status = 'pending'").fetchall()
     return [PendingItem(id=row[0], title=row[1], content=row[2]) for row in rows]
+
+
+def fetch_notifiable_items() -> list[NotifiableItem]:
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT id, source_id, title, url, summary, beginner_note, importance "
+            "FROM items WHERE status = 'analyzed' AND should_notify = 1"
+        ).fetchall()
+    return [NotifiableItem(*row) for row in rows]
+
+
+def update_items_status(item_ids: list[int], status: str) -> None:
+    if not item_ids:
+        return
+    with _connect() as conn:
+        conn.executemany(
+            "UPDATE items SET status = ? WHERE id = ?",
+            [(status, item_id) for item_id in item_ids],
+        )
 
 
 def update_item_analysis(item_id: int, result: AnalysisResult, status: str) -> None:
