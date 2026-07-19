@@ -1,6 +1,6 @@
 # PLAN.md — マイルストーン1 実装計画書
 
-最終更新: 2026-07-13
+最終更新: 2026-07-15
 前提ドキュメント: DESIGN.md(設計思想・技術選定はそちらが正)
 本書の目的: **どのチャット・どのモデルでも、本書とDESIGN.mdだけで実装を継続できる**ようにする。設計判断の再議論を不要にし、各Stepを独立した作業単位として渡せる状態を維持する。
 
@@ -14,8 +14,8 @@
 | 1 | LLM疎通スクリプト | ✅ 完了 | 2026-07-13 | [articles/step1-ollama-structured-output.md](articles/step1-ollama-structured-output.md) |
 | 2 | RSS収集 + SQLite既読管理 | ✅ 完了 | 2026-07-14 | [articles/step2-rss-diff-detection.md](articles/step2-rss-diff-detection.md) |
 | 3 | パイプライン結合 + sources.yaml | ✅ 完了 | 2026-07-15 | [articles/step3-pipeline-sources-yaml.md](articles/step3-pipeline-sources-yaml.md) |
-| 4 | Slack通知 | ⬜ 未着手 | | |
-| 5 | タスクスケジューラ常駐化 | ⬜ 未着手 | | |
+| 4 | Slack通知 | ✅ 完了(実Slack送達確認済。7/17に2レーン化+10件分割を追加) | 2026-07-16 | [articles/step4-slack-webhook.md](articles/step4-slack-webhook.md) / [articles/step4-notification-two-lane.md](articles/step4-notification-two-lane.md) |
+| 5 | タスクスケジューラ常駐化 | ✅ 完了(2日間の自動実行で通知到達を確認。PC電源オフ時はStartWhenAvailableが起動後に回収) | 2026-07-18 | [articles/step5-task-scheduler.md](articles/step5-task-scheduler.md) |
 | 番外 | BSODインシデント + llama-server移行 | ✅ 完了 | 2026-07-15 | [articles/step3-incident-gpu-bsod.md](articles/step3-incident-gpu-bsod.md) |
 
 ---
@@ -48,7 +48,7 @@ DESIGN.md §5 のJSONスキーマそのまま。
 - Pythonでは `AnalysisResult` dataclass(`src/core/models.py`)として受ける
 
 ### C2: itemsテーブル + status状態機械
-DESIGN.md §5 のDDLそのまま。状態遷移: `pending → analyzed → notified`、通知不要は `skipped`。
+DESIGN.md §5 のDDLそのまま。状態遷移: `pending → analyzed → notified`(メインCH)/ `stocked`(閾値未満をストックCHへ。2026-07-17の2レーン化で追加)、通知不要は `skipped`(ストック用Webhook未設定時の閾値未満も `skipped`)。
 - 書き込み: Step 3(pending作成、LLMのshould_notifyに基づきanalyzed/skipped更新)、Step 4(importance閾値未満をskippedに、通知した分をnotifiedに更新)
 - **statusの値を増減する場合はStep 3と4の両方を修正**
 - Step 3で `beginner_note` / `should_notify` / `reason` 列を追加(C1の全フィールドをDBに保持するため)。既存の `data/assistant.db` は破壊的変更のため作り直した(個人用ローカルDBのため許容)
@@ -67,7 +67,8 @@ DESIGN.md §5 の形式そのまま。
 |---|---|---|
 | `LLM_BASE_URL` | 既定 `http://localhost:8080/v1`(llama-serverのOpenAI互換API) | 1〜 |
 | `LLM_MODEL` | 既定 `local`。llama-serverは起動時ロードの1モデル固定のためAPI上は実質ダミー | 1〜 |
-| `SLACK_WEBHOOK_URL` | Incoming Webhook | 4〜 |
+| `SLACK_WEBHOOK_URL` | Incoming Webhook(メイン通知CH) | 4〜 |
+| `SLACK_STOCK_WEBHOOK_URL` | Incoming Webhook(閾値未満のストックCH)。未設定なら閾値未満はskipped | 4〜 |
 | `DB_PATH` | 既定 `data/assistant.db` | 2〜 |
 
 ※ 2026-07-15、Ollama(`OLLAMA_HOST`/`OLLAMA_MODEL`)からllama-serverに移行(BSODインシシデント対応、DESIGN.md §4参照)。モデル変更は`.env`ではなくllama-server起動bat(`qwen-start.bat`の`-m`)で行う運用に変更。
@@ -128,8 +129,8 @@ class Item:
 ### Step 4: Slack通知
 - 前提: Step 3完了。SlackでIncoming Webhook作成済(契約C5)
 - 作るもの: `src/notifiers/slack.py`、daily_news.py末尾に通知フェーズ追加
-- 処理: `status=analyzed AND should_notify AND importance >= ソースのmin_importance_to_notify` を抽出 → 整形(タイトル/要約/beginner_note/URL)→ POST → `notified` 更新。閾値未満は `skipped`
-- 実装要点: Webhook失敗時はanalyzedのまま残す(次回再送)。複数件は1メッセージにまとめる(通知疲れ防止)
+- 処理: `status=analyzed AND should_notify` を抽出し、ソースの`min_importance_to_notify`で2レーンに仕分け → 閾値以上はメインCHへ(→`notified`)、閾値未満はストックCHへ(→`stocked`。Webhook未設定時は`skipped`)
+- 実装要点: Webhook失敗時はanalyzedのまま残す(次回再送)。重要度の高い順に1メッセージ最大10件で分割し、チャンク単位でstatus確定(2026-07-17、初回208件を1通に詰めた反省から)
 - 完了条件: 実際のSlackに整形済み通知が届く
 - 記事ネタ: Slack Webhook実践
 
@@ -176,5 +177,5 @@ class Item:
 |---|---|---|
 | プロンプト本文(analyze_item) | Step 1 | 記事ネタなので試行錯誤の記録を残す |
 | 初期ソース3〜5件の選定 | Step 3 | it_news中心。artist系はM2のhtml対応後 |
-| Slackメッセージの整形フォーマット | Step 4 | まずプレーンテキスト、Block Kitは任意 |
-| 朝夕の実行時刻 | Step 5 | 生活リズムに合わせる |
+| Slackメッセージの整形フォーマット | Step 4 | ✅ 2026-07-19 Block Kit化(ヘッダー+リンク化タイトル+★重要度+context補足)。フォールバックtext併記 |
+| 朝夕の実行時刻 | Step 5 | ✅ 決定: 8:00・19:00(WakeToRun有効、逃した場合はStartWhenAvailableで起動後実行) |

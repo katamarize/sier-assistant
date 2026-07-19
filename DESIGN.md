@@ -1,7 +1,7 @@
 # DESIGN.md — 自分専用SIerアシスタント
 
 最終更新: 2026-07-13
-ステータス: マイルストーン1 実装準備完了(Step 完了)
+ステータス: マイルストーン1 完了(2026-07-18)。マイルストーン2 計画中(PLAN-M2.md)
 
 ---
 
@@ -135,7 +135,7 @@ CREATE TABLE items (
 );
 ```
 
-status の状態遷移: `pending`(収集済) → `analyzed`(LLMがshould_notify=trueと判定) → `notified`(Slack通知済)。LLMが `should_notify=false` と判定、または `analyzed` のうちソースの `min_importance_to_notify` 未満は `skipped`。
+status の状態遷移: `pending`(収集済) → `analyzed`(LLMがshould_notify=trueと判定) → `notified`(メインCHへ通知済)。`analyzed` のうちソースの `min_importance_to_notify` 未満はストックCHへ送り `stocked`(2026-07-17追加。ストック用Webhook未設定時は従来どおり `skipped`)。LLMが `should_notify=false` と判定した記事は `skipped`。通知は重要度の高い順に1メッセージ最大10件で分割送信する。
 
 ### LLM出力スキーマ(structured output)
 
@@ -190,14 +190,19 @@ APIキー・Webhook URLは .env 管理。公開リポジトリに秘密情報・
 | 4 | Slack通知 | importance≥3 が整形されて届く | Slack Webhook実践 |
 | 5 | タスクスケジューラで朝夕自動実行 | 手を触れず通知が届く | 常駐化 |
 
-### マイルストーン2以降(順不同・未確定)
+### マイルストーン2(確定 2026-07-19。実装計画は PLAN-M2.md)
 
-- Notion保存 + 毎朝レポート
-- グッズ・ライブ情報監視(HTML差分)
+- Step 6: 重要度評価のルーブリック化(評価分布の3集中を直す)
+- Step 7: グッズ・ライブ情報監視(HTML差分)
+- Step 8: Notion蓄積 + 過去分バックフィル
+- Step 9: 毎朝レポート
+
+### マイルストーン3以降(順不同・未確定)
+
 - モデル比較検証(日本語要約品質)
 - Docker化 → ノートPC①のUbuntuサーバー化 → 処理移設
 - n8n導入(オーケストレーションのみ)
-- Wake-on-LAN方式への移行(省電力運用)
+- Wake-on-LAN方式への移行(省電力運用。7/18のPC電源オフによる定時スキップの根本解もここ)
 - ノートPC②を検証環境化(Kubernetes等)
 
 ---

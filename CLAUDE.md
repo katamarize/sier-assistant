@@ -6,7 +6,7 @@
 ローカルLLM(llama-server)で運用し、学習・Zenn発信・ポートフォリオを兼ねる個人プロジェクト。
 
 - **設計の正は [DESIGN.md](DESIGN.md)**。設計思想・技術選定はここで決定済み。再議論しない
-- **進捗と実装計画は [PLAN.md](PLAN.md)**。Step単位で進める。モジュール間契約(C1〜C6)もここに定義
+- **進捗と実装計画は [PLAN.md](PLAN.md)(M1、完了)と [PLAN-M2.md](PLAN-M2.md)(M2、進行中)**。Step単位で進める。モジュール間契約(C1〜C6)はPLAN.md、M2での追加(C7等)はPLAN-M2.mdに定義
 - 契約(LLM出力スキーマ、itemsテーブル、sources.yaml等)を変更するときは **PLAN.md §4 影響マトリクスを確認し、DESIGN.md と PLAN.md の両方を更新する**
 
 ## 重要な前提(間違えやすい点)
