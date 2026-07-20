@@ -44,8 +44,13 @@ class LLMUnavailableError(Exception):
     pass
 
 
-def analyze(title: str, content: str) -> AnalysisResult:
-    prompt = _PROMPT_TEMPLATE.format(title=title, content=content)
+def analyze(
+    title: str, content: str, *, prompt_template: str | None = None
+) -> AnalysisResult:
+    # prompt_template は検証用途(新旧プロンプト比較)で差し替えるための口。
+    # 通常運用では None のままファイルのテンプレートを使う(後方互換)。
+    template = prompt_template if prompt_template is not None else _PROMPT_TEMPLATE
+    prompt = template.format(title=title, content=content)
     # llama-serverはAPIキー不要だがopenaiパッケージは値を要求するためダミーを渡す
     client = OpenAI(base_url=LLM_BASE_URL, api_key="no-key", timeout=_TIMEOUT_SECONDS)
 
