@@ -8,7 +8,7 @@ published: false
 
 ## この記事について
 
-「自分専用ニュースbot」開発記の番外編です。[前々回](./step1-ollama-structured-output.md)はOllamaでの構造化出力、[前回](./step2-rss-diff-detection.md)はRSS収集とSQLiteでの差分検知を作りました。今回はStep 3として、この2つを1本のパイプラインに繋ぐ検証をしていたところ、PCがブルースクリーンで落ちるインシデントに遭遇したので、その顛末をまとめます。
+「自分専用ニュースbot」開発記の番外編です。[前々回](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)はOllamaでの構造化出力、[前回](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)はRSS収集とSQLiteでの差分検知を作りました。今回はStep 3として、この2つを1本のパイプラインに繋ぐ検証をしていたところ、PCがブルースクリーンで落ちるインシデントに遭遇したので、その顛末をまとめます。
 
 コードの話は少なめ。代わりに「ローカルLLMを実用運用しようとすると、ソフトウェアの設計だけでなくハードウェアの熱管理・メモリ管理まで設計対象に入ってくる」という、開発記としては珍しい気づきの回になりました。
 
@@ -59,7 +59,7 @@ PAGE_NOT_ZERO
 
 ## 助かった点: pendingキュー設計のおかげでデータは無事だった
 
-今回のインシデントで唯一の救いは、`DESIGN.md` の段階で決めていた「LLM分析に失敗した記事は `pending` のまま残す」というキュー設計でした。[前回の記事](./step2-rss-diff-detection.md)で触れた `items` テーブルの `status` カラムは `pending → analyzed → notified` と遷移する設計で、クラッシュ時点で分析が終わっていなかった記事は、DBの中に `pending` のまま無傷で残っていました。
+今回のインシデントで唯一の救いは、`DESIGN.md` の段階で決めていた「LLM分析に失敗した記事は `pending` のまま残す」というキュー設計でした。[前回の記事](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)で触れた `items` テーブルの `status` カラムは `pending → analyzed → notified` と遷移する設計で、クラッシュ時点で分析が終わっていなかった記事は、DBの中に `pending` のまま無傷で残っていました。
 
 収集(RSS取得・既読管理)とLLM分析を明確に分離し、「LLMがどこで落ちても収集済みデータは失わない」前提で設計していたことが、初めての本番相当の連続実行でいきなり効いた形です。再起動後にバッチを再実行すれば、`pending` の記事はそのまま回収できました。障害を前提にした設計、想定していたよりずっと早く報われました。
 

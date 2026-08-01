@@ -12,8 +12,8 @@ M1で溜めた下書き7本を公開する計画。**公開作業のたびにこ
 
 | # | ファイル | タイトル(略) | 目安日 | 状態 |
 |---|---|---|---|---|
-| 1 | step1-ollama-structured-output.md | OllamaにJSONを厳密に返させる | 7/20(月) | ⬜ 未公開 |
-| 2 | step2-rss-diff-detection.md | RSS収集とSQLite差分検知 | 7/23(木) | ⬜ 未公開 |
+| 1 | step1-ollama-structured-output.md | OllamaにJSONを厳密に返させる | 7/20(月) | ✅ 公開済 7/19 |
+| 2 | step2-rss-diff-detection.md | RSS収集とSQLite差分検知 | 7/23(木) | ✅ published:true(push待ち) |
 | 3 | step3-incident-gpu-bsod.md | 推論中にPCが突然落ちた話(番外編) | 7/27(月) | ⬜ 未公開 |
 | 4 | step3-pipeline-sources-yaml.md | sources.yamlとクラッシュ耐性の実証 | 7/30(木) | ⬜ 未公開 |
 | 5 | step4-slack-webhook.md | Slack通知も再送できるキューとして設計 | 8/3(月) | ⬜ 未公開 |
@@ -29,13 +29,25 @@ M1で溜めた下書き7本を公開する計画。**公開作業のたびにこ
 - 対応済み: `image.png` → `images/slack-notification.png` へ移動し記事の参照を修正。本計画ファイルもZennがパースしないよう `articles/` の外(ルートのPLAN-ZENN.md)へ移動
 - **残作業(ユーザー操作)**: zenn.devのダッシュボード「GitHubからのデプロイ」でこのリポジトリを連携する(初回のみ)。ローカルプレビューは `npx zenn preview`
 
+## 記事URLの規則(2026-08-01に一括対応済み)
+
+Zennのslugはファイル名(拡張子なし)と一致するため、URLは公開前から確定している。
+
+```
+https://zenn.dev/katamarize/articles/<ファイル名から.mdを除いたもの>
+```
+
+全記事の相対リンク(`./stepX-....md`)は、この規則で絶対URLに一括置換済み。**公開のたびにリンクを置換する作業は不要になった**。
+
+- 注意: #4(step4-slack-webhook)は末尾で#4.5へ**前方リンク**している。#4公開から#4.5公開までの数日間、そのリンクは404になる。気になるなら#4と#4.5は同日〜翌日に続けて出す
+
 ## 1本ごとの公開前チェックリスト
 
-1. **相対リンクの置換**: 文中の `./stepX-....md` 形式のリンクを、公開済み記事のZenn URL(`https://zenn.dev/<user>/articles/<slug>`)に置き換える。前の記事が公開済みになって初めてURLが確定するので、時系列順ならこの作業が自然に回る
-2. **画像**: `image.png`(#4のみ)のアップロード/パス修正
-3. **natural-japanese スキルで最終lint**(執筆前にロード、lint→判断→収束)
-4. **frontmatter確認**: `published: true` に変更、topics・emojiの見直し
-5. 公開後、このファイルの状態列を ✅ に更新し、次の記事のリンク置換に使うURLを控える
+1. **natural-japanese スキルで最終lint**(執筆前にロード、lint→判断→収束)
+2. **frontmatter確認**: `published: true` に変更、topics・emojiの見直し
+3. コミットしてmainへpush(pushした時点で公開される)
+4. 公開後、このファイルの状態列を ✅ に更新
+5. 記事の技術的な要点は `study/stepN-*.md` に解説メモを用意しておく(コメント対応・質問用。Zennには公開されない)
 
 ## 備考
 

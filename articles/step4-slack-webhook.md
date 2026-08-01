@@ -8,7 +8,7 @@ published: false
 
 ## この記事について
 
-「自分専用ニュースbot」開発記の第4回です。[前回](./step3-pipeline-sources-yaml.md)までで、RSS収集→差分検知→LLM分析のパイプラインが完成し、分析結果はSQLiteに溜まるようになりました。今回はその出口、Slack通知を作ります。
+「自分専用ニュースbot」開発記の第4回です。[前回](https://zenn.dev/katamarize/articles/step3-pipeline-sources-yaml)までで、RSS収集→差分検知→LLM分析のパイプラインが完成し、分析結果はSQLiteに溜まるようになりました。今回はその出口、Slack通知を作ります。
 
 先に結論を書くと、今回やったことの本質は「Slackに送る」ことではありません。**Webhookの失敗をLLMの失敗と同じ「statusで管理される再送待ち」として扱う**ことで、Step 3で作ったキュー設計を通知まで貫通させました。
 
@@ -105,7 +105,7 @@ ALL OK
 
 ![Slackに届いた通知](/images/slack-notification.png)
 
-追記: この後、実運用初日に「1メッセージ208件」という洗礼を受けました。その顛末と通知の2レーン化は[#4.5](./step4-notification-two-lane.md)にまとめています。
+追記: この後、実運用初日に「1メッセージ208件」という洗礼を受けました。その顛末と通知の2レーン化は[#4.5](https://zenn.dev/katamarize/articles/step4-notification-two-lane)にまとめています。
 
 ## 次回予告
 

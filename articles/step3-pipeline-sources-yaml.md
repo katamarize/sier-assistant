@@ -8,9 +8,9 @@ published: false
 
 ## この記事について
 
-「自分専用ニュースbot」開発記の第3回です。[#1](./step1-ollama-structured-output.md)でローカルLLMのstructured output、[#2](./step2-rss-diff-detection.md)でRSS収集とSQLite差分検知を作りました。今回はこの2つを1本のパイプラインに結合し、監視対象のニュースソースをYAMLで宣言的に管理できるようにします。
+「自分専用ニュースbot」開発記の第3回です。[#1](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)でローカルLLMのstructured output、[#2](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)でRSS収集とSQLite差分検知を作りました。今回はこの2つを1本のパイプラインに結合し、監視対象のニュースソースをYAMLで宣言的に管理できるようにします。
 
-そして今回は予定外の見どころがあります。検証中に**PCがBSODでクラッシュし**([番外編](./step3-incident-gpu-bsod.md)参照)、結果的に「LLMが死んでもパイプラインは壊れない」というキュー設計の核心を、実際の障害で実証することになりました。
+そして今回は予定外の見どころがあります。検証中に**PCがBSODでクラッシュし**([番外編](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)参照)、結果的に「LLMが死んでもパイプラインは壊れない」というキュー設計の核心を、実際の障害で実証することになりました。
 
 ## 作ったもの
 
@@ -103,7 +103,7 @@ def run_analysis() -> None:
 
 ## 想定外の実証実験: 本物のクラッシュで設計を検証する
 
-初回のフル実行(100件超のpendingをLLMに連続投入)の最中に、PCがBSODで落ちました。GPUドライバー+メモリ破損系のクラッシュで、詳細は[番外編](./step3-incident-gpu-bsod.md)にまとめています。
+初回のフル実行(100件超のpendingをLLMに連続投入)の最中に、PCがBSODで落ちました。GPUドライバー+メモリ破損系のクラッシュで、詳細は[番外編](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)にまとめています。
 
 普通なら「実行中のデータはどうなった?」と青ざめる場面です。恐る恐る再起動後にDBを見ると:
 
