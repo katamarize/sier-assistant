@@ -1,5 +1,5 @@
 ---
-title: "推論中にPCが突然落ちた話 — 自分専用ニュースbot開発記 番外編"
+title: "推論中にPCが突然落ちた話 — ローカルLLMを利用した自分専用ニュースbot開発記 番外編"
 emoji: "💥"
 type: "tech"
 topics: ["ollama", "llamacpp", "nvidia", "windows", "llm"]

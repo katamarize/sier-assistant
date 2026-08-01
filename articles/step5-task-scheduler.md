@@ -1,5 +1,5 @@
 ---
-title: "常駐させない常駐化 — タスクスケジューラと使い捨てプロセス - 自分専用ニュースbot開発記 #5"
+title: "常駐させない常駐化 — ローカルLLMを利用した自分専用ニュースbot開発記 #5"
 emoji: "⏰"
 type: "tech"
 topics: ["python", "windows", "logging", "タスクスケジューラ", "個人開発"]

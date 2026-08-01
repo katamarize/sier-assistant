@@ -1,5 +1,5 @@
 ---
-title: "ローカルLLM(Ollama)にJSONを厳密に返させる — 自分専用ニュースbot開発記 #1"
+title: "ローカルLLM(Ollama)にJSONを厳密に返させる — ローカルLLMを利用した自分専用ニュースbot開発記 #1"
 emoji: "🦙"
 type: "tech"
 topics: ["ollama", "python", "llm", "qwen3", "structuredoutput"]

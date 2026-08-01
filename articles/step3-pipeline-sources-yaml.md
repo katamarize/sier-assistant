@@ -1,5 +1,5 @@
 ---
-title: "sources.yamlで宣言的にニュースソースを管理し、クラッシュ耐性をキュー設計で実証した — 自分専用ニュースbot開発記 #3"
+title: "sources.yamlでのソース管理と、キュー設計のクラッシュ耐性 — ローカルLLMを利用した自分専用ニュースbot開発記 #3"
 emoji: "🔗"
 type: "tech"
 topics: ["python", "sqlite", "yaml", "llamacpp", "llm"]

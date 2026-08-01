@@ -1,5 +1,5 @@
 ---
-title: "運用初日、Slackに208件届いた — 通知の2レーン化と重要度の現実 - 自分専用ニュースbot開発記 #4.5"
+title: "運用初日、Slackに208件届いた — ローカルLLMを利用した自分専用ニュースbot開発記 #4.5"
 emoji: "📥"
 type: "tech"
 topics: ["python", "slack", "sqlite", "llm", "個人開発"]

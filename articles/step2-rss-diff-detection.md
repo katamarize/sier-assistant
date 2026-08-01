@@ -1,5 +1,5 @@
 ---
-title: "RSS収集とSQLiteによる差分検知の設計 — 自分専用ニュースbot開発記 #2"
+title: "RSS収集とSQLiteによる差分検知の設計 — ローカルLLMを利用した自分専用ニュースbot開発記 #2"
 emoji: "📡"
 type: "tech"
 topics: ["python", "sqlite", "feedparser", "rss"]

@@ -1,5 +1,5 @@
 ---
-title: "Slack通知も「再送できるキュー」として設計する — 自分専用ニュースbot開発記 #4"
+title: "Slack通知も「再送できるキュー」として設計する — ローカルLLMを利用した自分専用ニュースbot開発記 #4"
 emoji: "🔔"
 type: "tech"
 topics: ["python", "slack", "webhook", "sqlite", "llm"]
