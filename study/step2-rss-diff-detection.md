@@ -43,20 +43,80 @@ item_key = entry.get("id") or entry.get("link")
 
 また `seen_items` は `(source_id, item_key)` を**複合主キー**にしているので、SQLiteが自動でインデックスを張ります。100件のフィードに対して100回の存在確認が走るので、ここが遅いと全体が遅くなります。
 
-## 3. 依存の向き(diff.py → storage.py の一方向) ★設計の話
+## 3. diff.py と storage.py の役割分担、そして依存の向き ★設計の話
 
-[diff.py](../src/core/diff.py) はたった6行ですが、意図があります。
+[diff.py](../src/core/diff.py) はたった6行です。「なぜ1ファイルに切り出すのか」と聞かれたら、以下を順に説明できるようにしておく。
+
+### 3-1. それぞれが何を知っていて、何を知らないか
+
+| ファイル | 役割 | 知っていること | 知らないこと |
+|---|---|---|---|
+| `storage.py` | DBとの会話係 | SQL、テーブル名、列名 | なぜその問い合わせをするのか |
+| `diff.py` | 「新着とは何か」を決める係 | 新着判定のルール | SQLもテーブル名も |
+
+`storage.is_seen()` は「このキーが `seen_items` にあるか」を答えるだけで、それが新着判定に使われることを知りません。逆に `diff.filter_new_items()` は「`seen_items` に無ければ新着」というルールを持っていますが、保存先がSQLiteなのかCSVなのかを知りません。
+
+利点はここです。DBをPostgreSQLに変えたくなったら `storage.py` だけ、新着の定義を変えたくなったら `diff.py` だけを直せば済みます。**変更の理由が違うものは別ファイルに置く**、という考え方です。
+
+### 3-2. 「一方向」= import の向きが輪になっていない
 
 ```python
-def filter_new_items(items: list[Item]) -> list[Item]:
-    return [item for item in items if not storage.is_seen(item.source_id, item.item_key)]
+# diff.py
+from src.core import storage          # diff は storage を知っている
+
+# storage.py
+# (diff を import する行が無い)       # storage は diff を知らない
 ```
 
-`diff` が `storage` を呼ぶ**一方向**にしています。逆に `storage` が `diff` を呼ぶ形にすると、お互いがお互いをimportする**循環import**になり、Pythonが起動時にエラーを出します。
+矢印で書くとこうなります。
 
-`content_hash` の計算を `storage.mark_seen()` の中でやっているのはそのためです([storage.py:82](../src/core/storage.py#L82))。ハッシュ計算は概念的には「差分検知の仕事」ですが、依存の向きを守るためにstorage側に置いています。
+```
+daily_news.py (パイプライン)
+     ├──→ diff.py ──→ storage.py
+     └──→ storage.py       │
+                           ↓
+                      models.py  ← 全員が使う土台。誰のこともimportしない
+```
 
-一般則として、「どちらがどちらを知っているべきか」を先に決めておくと循環は起きにくくなります。今回は「差分検知はDBを知っている / DBは差分検知を知らない」と決めました。
+矢印が一方通行で、輪っかになっていない。これが「一方向」の意味です。
+
+### 3-3. 輪になると実際に何が起きるか
+
+仮に `storage.py` が `diff.py` の関数を使いたくなって、こう書いたとします。
+
+```python
+# storage.py
+from src.core.diff import compute_hash   # ← 追加したとする
+```
+
+この時点で `diff → storage → diff → ...` という輪ができます。Pythonを起動すると:
+
+1. Pythonが `storage.py` を読み始める
+2. 1行目で「`diff` を読み込め」と言われ、`diff.py` に移る
+3. `diff.py` の1行目で「`storage` を読み込め」と言われる
+4. `storage` はまだ読み込み途中(2行目以降が存在しない状態)
+5. その中身を使おうとして落ちる
+
+```
+ImportError: cannot import name 'compute_hash' from partially initialized module
+'src.core.storage' (most likely due to a circular import)
+```
+
+`partially initialized`(初期化の途中)という文言が、まさに上の4の状態を指しています。
+
+だから `content_hash` の計算は `storage.mark_seen()` の中に置いてあります([storage.py:82](../src/core/storage.py#L82))。ハッシュ計算は気持ちとしては「差分検知の仕事」ですが、`diff.py` に置くと `storage` がそれを呼びたくなり、輪ができてしまう。それを避けるための配置です。
+
+別解として、ハッシュ計算だけを第3のファイル(`utils.py` 等)に切り出し、両方がそこを見る形にする手もあります。そちらのほうが素直ですが、関数1つのためにファイルを増やすほどではないと判断しました。
+
+### 3-4. 正直な話: 6行のために分ける価値はあるのか
+
+`daily_news.py` に直接書いても今は動きます。それでも分けた理由は3つ。
+
+1. 「新着とは何か」に住所を与える。ルールを変えたくなったとき、探す場所が確定している
+2. パイプラインが `seen_items` の存在を知らずに済む。`daily_news.py` は `filter_new_items()` を呼ぶだけ
+3. **Step 7で効いてくる**。HTML監視では「キーがあるか」ではなく「本文のハッシュが前回と違うか」で新着を判定する。この変更は `diff.py` の中だけで完結し、`storage.py` もパイプラインも触らずに済むはず
+
+3番目が一番実利のある理由です。今は割に合わないように見えても、Step 7で回収される予定の伏線という位置づけ。
 
 ## 4. INSERT OR IGNORE — 冪等性の実装
 

@@ -3,7 +3,7 @@ title: "RSS収集とSQLiteによる差分検知の設計 — 自分専用ニュ�
 emoji: "📡"
 type: "tech"
 topics: ["python", "sqlite", "feedparser", "rss"]
-published: false
+published: true
 ---
 
 ## この記事について
@@ -11,6 +11,9 @@ published: false
 「自分専用ニュースbot」開発記の第2回です。[前回](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)はローカルLLM(Ollama)にJSONを厳密に返させるところまで作りました。今回はLLMとは完全に独立したパート、**RSSフィードの収集と、SQLiteによる「既読管理」(同じ記事を2回通知しない仕組み)** を作ります。
 
 ゴールは「同じRSSフィードを2回実行したとき、2回目は新着0件になる」こと。地味ですが、これができないと毎回同じニュースで通知が飛んでくる、実用に耐えないbotになってしまいます。
+
+(雑談)
+記事は毎週末に上げようと思っていたのに、先週は「スプラトゥーン レイダース」に週末の時間を費やしてしまいました。沼すぎる。楽しい。
 
 ## 作ったもの
 
@@ -28,7 +31,7 @@ scripts/
 
 ### 1. collector の戻り値の型を先に固定する
 
-RSS収集(今回)の後には、いずれHTML差分監視(推しのライブ・グッズ情報など)を追加する予定があります。将来collectorが増えてもパイプライン側を書き換えずに済むよう、**collectorの戻り値の型を先に決めておきました**。
+RSS収集(今回)の後には、いずれHTML差分監視(ライブ・グッズ情報更新の一元管理をしたい)を追加する予定があります。将来collectorが増えてもパイプライン側を書き換えずに済むよう、**collectorの戻り値の型を先に決めておきました**。
 
 ```python:src/core/models.py
 @dataclass
