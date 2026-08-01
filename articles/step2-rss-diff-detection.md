@@ -3,7 +3,7 @@ title: "RSS収集とSQLiteによる差分検知の設計 — 自分専用ニュ�
 emoji: "📡"
 type: "tech"
 topics: ["python", "sqlite", "feedparser", "rss"]
-published: true
+published: false
 ---
 
 ## この記事について
