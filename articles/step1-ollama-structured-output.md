@@ -3,7 +3,7 @@ title: "ローカルLLM(Ollama)にJSONを厳密に返させる — ローカルL
 emoji: "🦙"
 type: "tech"
 topics: ["ollama", "python", "llm", "qwen3", "structuredoutput"]
-published: false
+published: true
 ---
 
 ## この記事について
