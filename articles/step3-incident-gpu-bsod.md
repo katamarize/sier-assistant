@@ -1,14 +1,20 @@
 ---
-title: "推論中にPCが突然落ちた話 — ローカルLLMを利用した自分専用ニュースbot開発記 番外編"
+title: "ローカルLLM推論中のブルースクリーン(DPC_WATCHDOG_VIOLATION)をWinDbgで追う #2.5"
 emoji: "💥"
 type: "tech"
 topics: ["ollama", "llamacpp", "nvidia", "windows", "llm"]
-published: false
+published: true
 ---
+
+:::message
+**ローカルLLMで作る自分専用ニュースbot** シリーズの番外編(2.5本目)です。この記事だけでも読めます。  
+前: [feedparser + SQLite で RSS の既読管理を実装する](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)  
+次: [監視ソースをYAMLで管理し、クラッシュしても再開できるキューを作る](https://zenn.dev/katamarize/articles/step3-pipeline-sources-yaml)
+:::
 
 ## この記事について
 
-「自分専用ニュースbot」開発記の番外編です。[前々回](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)はOllamaでの構造化出力、[前回](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)はRSS収集とSQLiteでの差分検知を作りました。今回はStep 3として、この2つを1本のパイプラインに繋ぐ検証をしていたところ、PCがブルースクリーンで落ちるインシデントに遭遇したので、その顛末をまとめます。
+Step 3として、[#1](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)で作ったLLM分析と[#2](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)で作ったRSS収集を1本のパイプラインに繋ぐ検証をしていたところ、PCがブルースクリーンで落ちるインシデントに遭遇しました。その顛末をまとめます。
 
 コードの話は少なめ。代わりに「ローカルLLMを実用運用しようとすると、ソフトウェアの設計だけでなくハードウェアの熱管理・メモリ管理まで設計対象に入ってくる」という、開発記としては珍しい気づきの回になりました。
 
@@ -16,7 +22,9 @@ published: false
 
 Step 3の検証として、RSS 5ソースから収集済みの pending 記事(100件超)を、Ollama経由でローカルLLM(`qwen3:8b`、Q4量子化で約5.2GB)に連続で流し、重要度判定させるバッチ処理を実行していました。GPUはRTX 3070(VRAM 8GB)で、推論はGPU側にオフロード。
 
-しばらく処理が流れていたのですが、直前のGPUコア温度が89℃まで上がったあたりで、推論の途中に突然画面がブラックアウトしました。PCの電源自体は落ちておらず、ファンは回り続けている。何が起きた? 再起動後にイベントビューアーを確認すると、次のログが残っていました。
+しばらく処理が流れていたのですが、直前のGPUコア温度が89℃まで上がったあたりで、推論の途中に突然画面がブラックアウトしました。PCの電源自体は落ちておらず、ファンは回り続けている。何が起きた?
+
+キーボード叩いてもマウス動かしても相変わらず画面は出ないため、泣く泣くPCを再起動しました。再起動後にイベントビューアーを確認すると、次のログが残っていました。
 
 ```
 Kernel-Power  Event ID 41  (予期しないシステム再起動/クラッシュ)
@@ -67,7 +75,7 @@ PAGE_NOT_ZERO
 
 再発防止として、LLM実行基盤をOllamaから `llama.cpp`(`llama-server`)に変更する方向で進めています。狙いはVRAM圧迫を根本的に下げることです。
 
-具体的には、モデルをQwen3系のMoE(Mixture of Experts)モデル(35B MoE、アクティブパラメータ約3B、IQ4_XS量子化)に切り替え、起動オプション `--n-cpu-moe 28` でエキスパートの大部分をCPU側に配置する構成にしました。MoEはトークンごとに一部のエキスパートしか使わないので、常時GPUに全パラメータを載せておく必要がなく、アクティブに使う部分だけをGPU側に残しつつ、大部分をCPU側にオフロードできます。これでVRAM使用量に余裕を持たせ、今回のような「VRAMほぼ満載+高温+長時間連続推論」という条件そのものを避けたい考えです。
+具体的には、モデルをQwen3系のMoE(Mixture of Experts)モデル(35B MoE、アクティブパラメータ約3B、IQ4_XS量子化)に切り替え（使用したモデルは[こちら](https://huggingface.co/mradermacher/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-i1-GGUF/tree/main)）、起動オプション `--n-cpu-moe 28` でエキスパートの大部分をCPU側に配置する構成にしました。MoEはトークンごとに一部のエキスパートしか使わないので、常時GPUに全パラメータを載せておく必要がなく、アクティブに使う部分だけをGPU側に残しつつ、大部分をCPU側にオフロードできます。これでVRAM使用量に余裕を持たせ、今回のような「VRAMほぼ満載+高温+長時間連続推論」という条件そのものを避けたい考えです。
 
 あわせて、運用面でも次の対策を検討しています。
 
@@ -82,4 +90,4 @@ MemTest86などによる根本原因の切り分けはまだ完了しておら�
 
 ## 次回予告
 
-原因切り分けと並行して、`llama-server` + MoEモデル構成でのStep 3パイプライン(RSS収集 → LLM分析 → Slack通知)の実装を進めます。次回は通常の開発記に戻り、この新しい推論基盤上でパイプラインを組み上げていきます。
+原因切り分けと並行して、`llama-server` + MoEモデル構成でのStep 3パイプライン(RSS収集 → LLM分析 → Slack通知)の実装を進めます。次回(#3)は通常の開発回に戻り、この新しい推論基盤上でパイプラインを組み上げていきます。

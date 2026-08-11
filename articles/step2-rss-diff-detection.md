@@ -1,14 +1,20 @@
 ---
-title: "RSS収集とSQLiteによる差分検知の設計 — ローカルLLMを利用した自分専用ニュースbot開発記 #2"
+title: "feedparser + SQLite で RSS の既読管理を実装する(重複通知を防ぐ) #2"
 emoji: "📡"
 type: "tech"
 topics: ["python", "sqlite", "feedparser", "rss"]
 published: true
 ---
 
+:::message
+**ローカルLLMで作る自分専用ニュースbot** シリーズの2本目です。この記事だけでも読めます。  
+前: [OllamaのStructured OutputでJSONを確実に返させる](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)  
+次: [ローカルLLM推論中のブルースクリーンをWinDbgで追う](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)
+:::
+
 ## この記事について
 
-「自分専用ニュースbot」開発記の第2回です。[前回](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)はローカルLLM(Ollama)にJSONを厳密に返させるところまで作りました。今回はLLMとは完全に独立したパート、**RSSフィードの収集と、SQLiteによる「既読管理」(同じ記事を2回通知しない仕組み)** を作ります。
+前回はローカルLLM(Ollama)にJSONを確実に返させるところまで作りました。今回はLLMとは完全に独立したパート、**RSSフィードの収集と、SQLiteによる「既読管理」(同じ記事を2回通知しない仕組み)** を作ります。
 
 ゴールは「同じRSSフィードを2回実行したとき、2回目は新着0件になる」こと。地味ですが、これができないと毎回同じニュースで通知が飛んでくる、実用に耐えないbotになってしまいます。
 

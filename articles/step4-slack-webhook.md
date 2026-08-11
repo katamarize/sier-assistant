@@ -1,14 +1,19 @@
 ---
-title: "Slack通知も「再送できるキュー」として設計する — ローカルLLMを利用した自分専用ニュースbot開発記 #4"
+title: "PythonからSlack Incoming Webhookで通知する(再送できるキュー設計) #4"
 emoji: "🔔"
 type: "tech"
 topics: ["python", "slack", "webhook", "sqlite", "llm"]
 published: false
 ---
 
+:::message
+**ローカルLLMで作る自分専用ニュースbot** シリーズの4本目です。この記事だけでも読めます。
+前: [監視ソースをYAMLで管理し、クラッシュしても再開できるキューを作る](https://zenn.dev/katamarize/articles/step3-pipeline-sources-yaml)
+:::
+
 ## この記事について
 
-「自分専用ニュースbot」開発記の第4回です。[前回](https://zenn.dev/katamarize/articles/step3-pipeline-sources-yaml)までで、RSS収集→差分検知→LLM分析のパイプラインが完成し、分析結果はSQLiteに溜まるようになりました。今回はその出口、Slack通知を作ります。
+前回までで、RSS収集→差分検知→LLM分析のパイプラインが完成し、分析結果はSQLiteに溜まるようになりました。今回はその出口、Slack通知を作ります。
 
 先に結論を書くと、今回やったことの本質は「Slackに送る」ことではありません。**Webhookの失敗をLLMの失敗と同じ「statusで管理される再送待ち」として扱う**ことで、Step 3で作ったキュー設計を通知まで貫通させました。
 
@@ -86,7 +91,7 @@ https://example.com/...
 
 ## 検証: 本物のSlackに送る前にモックで壊し方を確かめる
 
-BSODの一件(番外編参照)以来、「正常系より先に異常系を確認する」が習慣になりました。今回はローカルにHTTPサーバーを立ててWebhookの代役をさせ、一時DBに5パターンの記事(閾値以上・閾値未満・pending・should_notify=0)を仕込んで検証しています。
+BSODの一件(#2.5参照)以来、「正常系より先に異常系を確認する」が習慣になりました。今回はローカルにHTTPサーバーを立ててWebhookの代役をさせ、一時DBに5パターンの記事(閾値以上・閾値未満・pending・should_notify=0)を仕込んで検証しています。
 
 確認したのは3点です。
 

@@ -1,16 +1,21 @@
 ---
-title: "ローカルLLM(Ollama)にJSONを厳密に返させる — ローカルLLMを利用した自分専用ニュースbot開発記 #1"
+title: "OllamaのStructured OutputでJSONを確実に返させる(Python + Qwen3) #1"
 emoji: "🦙"
 type: "tech"
 topics: ["ollama", "python", "llm", "qwen3", "structuredoutput"]
 published: true
 ---
 
+:::message
+**ローカルLLMで作る自分専用ニュースbot** シリーズの1本目です。この記事だけでも読めます。  
+次: [feedparser + SQLite で RSS の既読管理を実装する](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)
+:::
+
 ## この記事について
 
 ### 開発の動機
 
-新人SIerの私が、毎朝自分に必要な技術ニュースだけを自動収集・要約・通知してくれる「自分専用のニュースbot」を作るシリーズの第1回です。
+新人SIerの私が、毎朝自分に必要な技術ニュースだけを自動収集・要約・通知してくれる「自分専用のニュースbot」を作ります。
 
 発端は三つありました。
 
@@ -26,7 +31,7 @@ published: true
 
 今回のゴールはシンプルで、**ローカルLLM(Ollama)に記事のテキストを渡し、機械可読なJSONで「重要度」や「通知すべきか」を判定させる**ところまで。収集(RSS)やSlack通知はまだ登場しません。設計全体はリポジトリの `DESIGN.md` / `PLAN.md` にまとめていて、この記事はその「Step 1」に対応します。
 
-なお、LLM実行基盤はこの時点ではOllamaです。のちにllama.cpp(llama-server)へ移行するのですが、その顛末は番外編で書きます。記事は当時の構成のまま残しています。
+なお、LLM実行基盤はこの時点ではOllamaです。のちにllama.cpp(llama-server)へ移行するのですが、その顛末は番外編(#2.5)で書きます。記事は当時の構成のまま残しています。
 
 ## なぜLLMの役割を「理解・整理」だけに絞ったか
 

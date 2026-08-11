@@ -1,14 +1,19 @@
 ---
-title: "運用初日、Slackに208件届いた — ローカルLLMを利用した自分専用ニュースbot開発記 #4.5"
+title: "運用初日、Slackに208件通知が飛んできた話 #4.5"
 emoji: "📥"
 type: "tech"
 topics: ["python", "slack", "sqlite", "llm", "個人開発"]
 published: false
 ---
 
+:::message
+**ローカルLLMで作る自分専用ニュースbot** シリーズの番外編(4.5本目)です。この記事だけでも読めます。
+前: [PythonからSlack Incoming Webhookで通知する](https://zenn.dev/katamarize/articles/step4-slack-webhook)
+:::
+
 ## この記事について
 
-「自分専用ニュースbot」開発記の番外編です。[前回](https://zenn.dev/katamarize/articles/step4-slack-webhook)でSlack通知を実装し、モック検証まで済ませて「あとはWebhookを設定するだけ」と書きました。この記事は、実際にWebhookを設定して動かした初日に起きたことと、その反省で入れた3つの改善の話です。
+前回はSlack通知を実装し、モック検証まで済ませて「あとはWebhookを設定するだけ」と書きました。この記事は、実際にWebhookを設定して動かした初日に起きたことと、その反省で入れた3つの改善の話です。
 
 結論を先に書くと、**通知機能は「送れること」がゴールではありませんでした**。何を・どこへ・どれだけ送るかを絞り込む設計が本体で、それは実データを見るまで決められませんでした。
 

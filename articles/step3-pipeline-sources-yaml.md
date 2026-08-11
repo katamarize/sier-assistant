@@ -1,16 +1,21 @@
 ---
-title: "sources.yamlでのソース管理と、キュー設計のクラッシュ耐性 — ローカルLLMを利用した自分専用ニュースbot開発記 #3"
+title: "監視ソースをYAMLで管理し、クラッシュしても再開できるキューを作る #3"
 emoji: "🔗"
 type: "tech"
 topics: ["python", "sqlite", "yaml", "llamacpp", "llm"]
-published: false
+published: true
 ---
+
+:::message
+**ローカルLLMで作る自分専用ニュースbot** シリーズの3本目です。この記事だけでも読めます。  
+前: [ローカルLLM推論中のブルースクリーンをWinDbgで追う](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)
+:::
 
 ## この記事について
 
-「自分専用ニュースbot」開発記の第3回です。[#1](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)でローカルLLMのstructured output、[#2](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)でRSS収集とSQLite差分検知を作りました。今回はこの2つを1本のパイプラインに結合し、監視対象のニュースソースをYAMLで宣言的に管理できるようにします。
+[#1](https://zenn.dev/katamarize/articles/step1-ollama-structured-output)でローカルLLMのstructured output、[#2](https://zenn.dev/katamarize/articles/step2-rss-diff-detection)でRSS収集とSQLite差分検知を作りました。今回はこの2つを1本のパイプラインに結合し、監視対象のニュースソースをYAMLで宣言的に管理できるようにします。
 
-そして今回は予定外の見どころがあります。検証中に**PCがBSODでクラッシュし**([番外編](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)参照)、結果的に「LLMが死んでもパイプラインは壊れない」というキュー設計の核心を、実際の障害で実証することになりました。
+そして今回は予定外のポイントがあります。検証中に**PCがBSODでクラッシュし**([#2.5](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)参照)、結果的に「LLMが死んでもパイプラインは壊れない」というキュー設計の核心を、実際の障害で実証することになりました。
 
 ## 作ったもの
 
@@ -103,7 +108,7 @@ def run_analysis() -> None:
 
 ## 想定外の実証実験: 本物のクラッシュで設計を検証する
 
-初回のフル実行(100件超のpendingをLLMに連続投入)の最中に、PCがBSODで落ちました。GPUドライバー+メモリ破損系のクラッシュで、詳細は[番外編](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)にまとめています。
+初回のフル実行(100件超のpendingをLLMに連続投入)の最中に、PCがBSODで落ちました。GPUドライバー+メモリ破損系のクラッシュで、詳細は[#2.5](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)にまとめています。
 
 普通なら「実行中のデータはどうなった?」と青ざめる場面です。恐る恐る再起動後にDBを見ると:
 
@@ -115,7 +120,7 @@ def run_analysis() -> None:
 
 クラッシュ直前に処理し終えた6件はコミット済み、残り219件は**pendingのまま無傷**でした。SQLiteは1件ごとにコミットしているので、プロセスがどのタイミングで即死してもDBは壊れません。「再実行すれば続きから回収される」設計がそのまま機能しました。
 
-その後、LLM実行基盤をOllamaからllama.cpp(llama-server)のOpenAI互換APIに移行し(VRAM圧迫を下げるため。これも番外編参照)、溜まった全pendingを処理する再実行を行ったところ:
+その後、LLM実行基盤をOllamaからllama.cpp(llama-server)のOpenAI互換APIに移行し(VRAM圧迫を下げるため。これも#2.5参照)、溜まった全pendingを処理する再実行を行ったところ:
 
 ```
 AWS What's New (aws-whats-new): 新着 11 件
@@ -128,7 +133,8 @@ LLM分析対象(pending): 300 件
 
 **300件を約15秒/件、失敗0件で完走**(クラッシュで残った219件+当日の新着81件)。処理後のstatus内訳は `analyzed 161 / skipped 145 / pending 0`、importance分布は4が35件・3が245件・2が26件。GPU温度は全行程で80℃未満(30秒間隔で監視)で、移行後の構成では普通に安定して動いています。
 
-「LLM停止→pending維持→再実行で回収」はStep 3の完了条件として最初から検証項目に入れていましたが、まさか停止どころかOSごと落ちる本番相当のテストになるとは思いませんでした。**障害を前提にした設計は、障害が起きた日に初めて価値がわかる**、を身をもって体験した回でした。
+「LLM停止→pending維持→再実行で回収」はStep 3の完了条件として最初から検証項目に入れていましたが、まさか停止どころかOSごと落ちる本番相当のテストになるとは思いませんでした。普段業務で保守運用のアラートが飛んで初めて気づくようなエラーもありますが、実運用始める前にエラーになるとは...💦  
+あらゆるテストケースを事前に想定して対策する重要さを身をもって体験した回でした。
 
 ## LLMサーバー移行がパイプラインに与えた影響: import 1行
 
