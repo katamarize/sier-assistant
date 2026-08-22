@@ -1,6 +1,6 @@
 # Zenn記事 公開計画(2026-07-19決定)
 
-M1で溜めた下書き7本を公開する計画。**公開作業のたびにこのファイルのチェックボックスを更新する。**
+M1で溜めた下書き7本(+M2の#6)を公開する計画。**公開作業のたびにこのファイルのチェックボックスを更新する。**
 
 ## 方針
 
@@ -10,15 +10,18 @@ M1で溜めた下書き7本を公開する計画。**公開作業のたびにこ
 
 ## 公開順と目安日
 
-| # | ファイル | タイトル(略) | 目安日 | 状態 |
+「掲載順」は出す順番、「記事番号」は本文中で使っているシリーズ番号(#2.5・#4.5は番外編)。両者は一致しないので混同しないこと。
+
+| 掲載順 | 記事番号 | ファイル | タイトル(略) | 状態 |
 |---|---|---|---|---|
-| 1 | step1-ollama-structured-output.md | OllamaにJSONを厳密に返させる | 7/20(月) | ✅ 公開済 7/19 |
-| 2 | step2-rss-diff-detection.md | RSS収集とSQLite差分検知 | 7/23(木) | ✅ published:true(push待ち) |
-| 3 | step3-incident-gpu-bsod.md | 推論中にPCが突然落ちた話(番外編) | 7/27(月) | ⬜ 未公開 |
-| 4 | step3-pipeline-sources-yaml.md | sources.yamlとクラッシュ耐性の実証 | 7/30(木) | ⬜ 未公開 |
-| 5 | step4-slack-webhook.md | Slack通知も再送できるキューとして設計 | 8/3(月) | ⬜ 未公開 |
-| 6 | step4-notification-two-lane.md | 運用初日、Slackに208件届いた(#4.5) | 8/6(木) | ⬜ 未公開 |
-| 7 | step5-task-scheduler.md | 常駐させない常駐化 | 8/10(月) | ⬜ 未公開 |
+| 1 | #1 | step1-ollama-structured-output.md | OllamaにJSONを厳密に返させる | ✅ 公開済 7/19 |
+| 2 | #2 | step2-rss-diff-detection.md | RSS収集とSQLite差分検知 | ✅ 公開済 |
+| 3 | #2.5 | step3-incident-gpu-bsod.md | 推論中にPCが突然落ちた話(番外編) | ✅ 公開済 8/11 |
+| 4 | #3 | step3-pipeline-sources-yaml.md | sources.yamlとクラッシュ耐性の実証 | ✅ 公開済 8/11 |
+| 5 | #4 | step4-slack-webhook.md | Slack通知も再送できるキューとして設計 | ⬜ 次に公開(#4.5と同時) |
+| 6 | #4.5 | step4-notification-two-lane.md | 運用初日、Slackに208件届いた(番外編) | ⬜ 次に公開(#4と同時) |
+| 7 | #5 | step5-task-scheduler.md | 常駐させない常駐化 | ⬜ 未公開 |
+| 8 | #6 | step6-rubric-importance.md | 重要度スコアの3寄りをルーブリックで直す | ⬜ 未公開(M2) |
 
 日付は目安。ずれても順番だけ守る。
 
@@ -26,7 +29,8 @@ M1で溜めた下書き7本を公開する計画。**公開作業のたびにこ
 
 このリポジトリ(katamarize/sier-assistant)をZennにGitHub連携する。`articles/` がリポジトリ直下にあり、全ファイル名がZennのslug規則(小文字英数ハイフン12〜50文字)を満たしているためそのまま使える。`published: true` にしてmainへpushすれば公開される。
 
-- 対応済み: `image.png` → `images/slack-notification.png` へ移動し記事の参照を修正。本計画ファイルもZennがパースしないよう `articles/` の外(ルートのPLAN-ZENN.md)へ移動
+- 対応済み: 本計画ファイルはZennがパースしないよう `articles/` の外(ルートのPLAN-ZENN.md)へ移動
+- **画像は `images/<記事のファイル名>/<内容がわかる名前>.png` に置く**。参照は必ずルートからの絶対パス(`/images/...`)。Zennは相対パスを解決しないため、`articles/` に画像を置いて `![](image.png)` と書くと表示されない
 - **残作業(ユーザー操作)**: zenn.devのダッシュボード「GitHubからのデプロイ」でこのリポジトリを連携する(初回のみ)。ローカルプレビューは `npx zenn preview`
 
 ## 記事URLの規則(2026-08-01に一括対応済み)
@@ -39,7 +43,7 @@ https://zenn.dev/katamarize/articles/<ファイル名から.mdを除いたもの
 
 全記事の相対リンク(`./stepX-....md`)は、この規則で絶対URLに一括置換済み。**公開のたびにリンクを置換する作業は不要になった**。
 
-- 注意: #4(step4-slack-webhook)は末尾で#4.5へ**前方リンク**している。#4公開から#4.5公開までの数日間、そのリンクは404になる。気になるなら#4と#4.5は同日〜翌日に続けて出す
+- 注意: #4(step4-slack-webhook)は冒頭と末尾で#4.5へ**前方リンク**している。#4だけ先に出すとそのリンクが404になるため、**#4と#4.5は必ず同時に公開する**
 
 ## 1本ごとの公開前チェックリスト
 
@@ -52,4 +56,4 @@ https://zenn.dev/katamarize/articles/<ファイル名から.mdを除いたもの
 ## 備考
 
 - #1・#2に「Ollama」が登場するのは歴史的経緯としてそのまま残す(番外編でllama.cppへの移行理由が語られる構成が、シリーズとしての伏線になっている)。CLAUDE.mdの前提とも整合
-- M2のStep完了記事(Step 6〜9)は、この7本の公開が進んでから同じペースに合流させる
+- M2のStep完了記事(#6以降)は、M1の7本を出し切ってから同じペースで合流させる

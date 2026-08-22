@@ -8,7 +8,8 @@ published: true
 
 :::message
 **ローカルLLMで作る自分専用ニュースbot** シリーズの3本目です。この記事だけでも読めます。  
-前: [ローカルLLM推論中のブルースクリーンをWinDbgで追う](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)
+前: [ローカルLLM推論中のブルースクリーンをWinDbgで追う](https://zenn.dev/katamarize/articles/step3-incident-gpu-bsod)  
+次: [PythonからSlack Incoming Webhookで通知する](https://zenn.dev/katamarize/articles/step4-slack-webhook)
 :::
 
 ## この記事について
