@@ -3,7 +3,7 @@ title: "運用初日、Slackに208件通知が飛んできた話 #4.5"
 emoji: "📥"
 type: "tech"
 topics: ["python", "slack", "sqlite", "llm", "個人開発"]
-published: false
+published: true
 ---
 
 :::message

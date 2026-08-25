@@ -18,8 +18,8 @@ M1で溜めた下書き7本(+M2の#6)を公開する計画。**公開作業の�
 | 2 | #2 | step2-rss-diff-detection.md | RSS収集とSQLite差分検知 | ✅ 公開済 |
 | 3 | #2.5 | step3-incident-gpu-bsod.md | 推論中にPCが突然落ちた話(番外編) | ✅ 公開済 8/11 |
 | 4 | #3 | step3-pipeline-sources-yaml.md | sources.yamlとクラッシュ耐性の実証 | ✅ 公開済 8/11 |
-| 5 | #4 | step4-slack-webhook.md | Slack通知も再送できるキューとして設計 | ⬜ 次に公開(#4.5と同時) |
-| 6 | #4.5 | step4-notification-two-lane.md | 運用初日、Slackに208件届いた(番外編) | ⬜ 次に公開(#4と同時) |
+| 5 | #4 | step4-slack-webhook.md | Slack通知も再送できるキューとして設計 | ✅ 公開済 8/25 |
+| 6 | #4.5 | step4-notification-two-lane.md | 運用初日、Slackに208件届いた(番外編) | ✅ 公開済 8/25 |
 | 7 | #5 | step5-task-scheduler.md | 常駐させない常駐化 | ⬜ 未公開 |
 | 8 | #6 | step6-rubric-importance.md | 重要度スコアの3寄りをルーブリックで直す | ⬜ 未公開(M2) |
 
