@@ -8,7 +8,8 @@ published: true
 
 :::message
 **ローカルLLMで作る自分専用ニュースbot** シリーズの番外編(4.5本目)です。この記事だけでも読めます。  
-前: [PythonからSlack Incoming Webhookで通知する](https://zenn.dev/katamarize/articles/step4-slack-webhook)
+前: [PythonからSlack Incoming Webhookで通知する](https://zenn.dev/katamarize/articles/step4-slack-webhook)  
+次: [Windowsタスクスケジューラで Python を毎朝動かす](https://zenn.dev/katamarize/articles/step5-task-scheduler)
 :::
 
 ## この記事について
